@@ -23,7 +23,14 @@ jobs:
           NAMESPACE="pr-${{ github.event.number }}"
           PR_TAG="pr-${{ github.event.number }}"
           
-          # This replaces the placeholder image in deployment.yaml with the one we just built
+          # 1. Ensure the Namespace exists
+          kubectl create namespace $NAMESPACE || true
+          
+          # 2. Fix the Image Tag (You already have this)
           sed -i "s|image: ephemeral-app:latest|image: ephemeral-app:$PR_TAG|g" k8s/deployment.yaml
           
+          # 3. FIX: Inject the actual PR number into the environment variable
+          sed -i 's|value: "REPLACE_ME_WITH_PR_NUMBER"|value: "'${{ github.event.number }}'"|g' k8s/deployment.yaml
+          
+          # 4. Apply the changes
           kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
