@@ -1,0 +1,11 @@
+# Ignore binaries
+minikube-linux-amd64
+actions-runner-linux-x64-*.tar.gz
+
+# Ignore runner folders
+_work/
+actions-runner/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
