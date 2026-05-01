@@ -1,0 +1,31 @@
+name: Deploy Ephemeral PR Env (Local)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, local-dev] # This tells GitHub to run the code on YOUR laptop
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Build and Load to Minikube
+        run: |
+          PR_TAG="pr-${{ github.event.number }}"
+          # We build directly into Minikube's Docker env so we don't even need to push to Docker Hub!
+          eval $(minikube docker-env)
+          docker build -t ephemeral-app:$PR_TAG .
+
+      - name: Deploy to K8s
+        run: |
+          NAMESPACE="pr-${{ github.event.number }}"
+          kubectl create namespace $NAMESPACE || true
+          
+          # Prepare the manifest
+          sed -i "s|REPLACE_ME_WITH_PR_NUMBER|${{ github.event.number }}|g" k8s/deployment.yaml
+          # Update the image to use the local tag we just built
+          sed -i "s|your-docker-username/ephemeral-app:latest|ephemeral-app:pr-${{ github.event.number }}|g" k8s/deployment.yaml
+          
+          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE

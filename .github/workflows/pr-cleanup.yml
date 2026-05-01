@@ -1,0 +1,14 @@
+name: Cleanup PR Env
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    runs-on: [self-hosted, local-dev]
+    steps:
+      - name: Delete Namespace
+        run: |
+          NAMESPACE="pr-${{ github.event.number }}"
+          kubectl delete namespace $NAMESPACE --ignore-not-found

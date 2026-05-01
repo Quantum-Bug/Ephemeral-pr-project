@@ -1,13 +1,13 @@
+# k8s/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ephemeral-app
-  # The namespace will be dynamically set by our CI/CD script
 spec:
   replicas: 1
-  selectors: 
-  matchLabels:
-    app: ephemeral-app
+  selector:
+    matchLabels:
+      app: ephemeral-app
   template:
     metadata:
       labels:
@@ -15,12 +15,13 @@ spec:
     spec:
       containers:
       - name: app
-        image: your-docker-username/ephemeral-app:latest
+        image: ephemeral-app:latest # sed will replace this
+        imagePullPolicy: Never # Critical for local Minikube builds
         ports:
         - containerPort: 8000
         env:
         - name: PR_NUMBER
-          value: "REPLACE_ME_WITH_PR_NUMBER" # We will swap this using 'sed' in CI
+          value: "REPLACE_ME_WITH_PR_NUMBER"
 ---
 apiVersion: v1
 kind: Service
@@ -33,4 +34,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 8000
-  type: LoadBalancer
+  type: NodePort # Use NodePort for local access instead of LoadBalancer
